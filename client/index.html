@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en" ng-app ng-controller="ChatController">
+
+<head>
+    <title ng-bind="pageName"></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/site.css">
+    <link rel="shortcut icon" type="image/x-icon" href="/img/space/blueships1.png" />
+    <script src="/js/modernizr-2.6.2.js"></script>
+    <style>
+        body {
+            padding-top: 60px;
+        }
+        
+        .hand {
+            cursor: pointer;
+        }
+    </style>
+
+    <script src="/controller.js"></script>
+    <script>
+        function ChatController($scope) {
+            socket = (new Controller({ name: 'Chat' })).connect({ io, $scope });
+            
+            socket.hooks.whoami = (msg) => {
+                const pageDetails = $scope.pageDetails || {};
+                console.log('CONNECTED', msg);
+                $scope.welcomeMessage = 'Hi,' + ($scope.me || 'Anonomous');
+                
+                $scope.ownershipMessage = pageDetails.subdomain === '#' ? '' : 
+                ('This subdomain ' + ($scope.isMySubdomain ? 'is yours' : ($scope.isSubdomainTaken ? "belongs to " + pageDetails.owner: 'available') + '.'));
+                
+                $scope.playOthersMessage = $scope.isSubdomainTaken && !$scope.isMySubdomain ? 'Play ' + $scope.pageName + ' now' : '';
+                $scope.$apply();
+            };
+            
+            
+            
+            $scope.testSubdomain = '';
+            $scope.randomWord = '';
+            
+            $scope.clickRandomWord = () => {
+                $scope.testSubdomain = $scope.randomWord;
+                var vowels = ['a', 'e', 'i', 'o', 'u'];
+                var consts =  ['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'qu', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z', 'tt', 'ch', 'sh'];
+                var len = 3 + Math.floor((Math.random()*8));
+                var word = '';
+                var is_vowel = false;
+                var arr;
+                for (var i = 0; i < len; i++) {
+                  if (is_vowel) arr = vowels;
+                  else arr = consts;
+                  is_vowel = !is_vowel;
+                
+                  word += arr[Math.round(Math.random()*(arr.length-1))];
+                }
+                $scope.randomWord = word;
+            };
+            
+            $scope.clickRandomWord();
+            
+        }
+    </script>
+</head>
+
+<body>
+    <header>
+        <div class="content-wrapper">
+            
+            <br/>
+            <div class="float-right">
+                <div class="float-right">
+                    <nav>
+                        <ul id="menu">
+                            <li><a href="/play">play</a></li>
+                            <li><a href="/chat">chat</a></li>
+                            <li ng-show="isLoggedIn"><a href="/me" ng-bind="me"></a></li>
+                            <li ng-show="isLoggedIn"><a href="/logout">logout</a></li>
+                        </ul>
+                        
+                    </nav>
+                </div>
+                <div class="float-right">
+                    <p class="site-title" ng-bind="pageName"></p>
+                </div>
+                <form id="login" ng-show="!isLoggedIn" action="auth" method="post" class="float-right">
+                    <input id="username" type="text" placeholder="username" name="username" required>
+                    <br/>
+                    <input type="password" placeholder="password" name="password" required>
+                    <br/>
+                    <p class="float-right" type="submit"><button type="submit">login</button></p>
+                </form>
+                <br/>
+                <div ng-show="!isLoggedIn" class="float-left">
+                    <h3 class="hand" ng-click="showSignup=!showSignup"><a>Create an account</a></h3>
+                    <form id="signup" ng-show="showSignup" action="signup" method="post">
+                        <input id="newUsername" type="text" name="newUserName" placeholder="Choose a username" required />
+                        <br/>
+                        <input type="password" placeholder="password" name="password" required>
+                        <br/>
+                        <input type="password" placeholder="confirm password" name="confirmPassword" required>
+                        <br/>
+                        <button type="submit">Signup</button>
+                    </form>
+                    <br/>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div id="body">
+        <section class="content-wrapper main-content clear-fix">
+            <section class="featured">
+                <div class="content-wrapper">
+                    <div>
+                        <br/>
+                        <a href="/play"><button>Play</button></a>
+                        <br />
+                        <p><b>{{pageName}} was built on the <a href="//worldy.io">worldy.io</a> platform</b></p>
+                    </div>
+                        
+                </div>
+            </section>
+        </section>
+    </div>
+
+    <footer>
+        <div class="content-wrapper">
+            <div class="float-left">
+                <p>2016 - ncidence.org</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/angular.min.js"></script>
+</body>
+
+</html>

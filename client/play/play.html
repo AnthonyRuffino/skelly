@@ -1,0 +1,104 @@
+<html ng-app ng-controller="ChatController">
+
+<head>
+	<title ng-bind="title"></title>
+
+	<link rel="shortcut icon" type="image/x-icon" href="/img/space/blueships1.png" />
+
+	<script src="/controller.js"></script>
+
+</head>
+
+
+<body>
+	<h1 ng-model="title"></h1>
+	<div id="gameDiv"></div>
+</body>
+
+<script>
+</script>
+
+<script src="/common.js"></script>
+<script src="js/renderer.js"></script>
+<script src="/driver.js"></script>
+<script src="js/gameEngine.js"></script>
+
+
+<script>
+	/*global Renderer*/
+	/*global GameDriver*/
+	/*global GameEngine*/
+
+
+	window.addEventListener('keydown', function(e) {
+		if (e.keyCode == 32 && e.target == document.body) {
+			e.preventDefault();
+		}
+	});
+
+
+	/*global Controller*/
+	/*global io*/
+	const startGame = (socket) => {
+		let gameDriverMissingMessage = null;
+		try {
+			if (GameDriver === undefined) {
+				gameDriverMissingMessage = 'GameDriver class is not defined'
+			}
+		}
+		catch (err) {
+			gameDriverMissingMessage = err;
+		}
+		
+		gameEngine = !gameDriverMissingMessage ? (() => {
+			
+			var BOARD_SIZE_PERCENTAGE = .50;
+			var renderer = new Renderer(window, document, "gameDiv", BOARD_SIZE_PERCENTAGE);
+			renderer.init();
+			
+			var driver = new GameDriver(socket, renderer, window.body, window.console.log, function(txt) { alert.call(window, txt); });
+			if (driver.init) {
+				driver.init();
+			}
+			
+			if(!driver.getRenderer) {
+				driver.getRenderer = function() {
+					return renderer;
+				}
+			} 
+			
+			if (driver.click) {
+				document.onmousedown = function(mouse) {
+					var mouseX = mouse.x - driver.renderer.horizontalOffset;
+					var mouseY = mouse.y - driver.renderer.verticalOffset;
+					driver.click(mouseX, mouseY);
+				};
+			}
+			
+			if (driver.onkeydown) {
+				document.onkeydown = function(event) {
+					driver.onkeydown(event);
+				};
+			}
+			console.log('Starting game');
+			return new GameEngine(driver, window);
+		})() : ((redirectHome) => {
+			return { start: redirectHome } 
+		})(() => {
+			console.log('redirecting from page');
+			window.alert(gameDriverMissingMessage);
+			window.location.replace("/");
+		});
+		gameEngine.start();
+	};
+
+	function ChatController($scope) {
+		const socket = (new Controller({ name: 'Play' })).connect({ io, $scope });
+		startGame(socket);
+	}
+</script>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/angular.min.js"></script>
+
+</html>
